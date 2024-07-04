@@ -1,2 +1,1 @@
-# HNG_Stage_One
-Weather App
+# HNG-Stage_1

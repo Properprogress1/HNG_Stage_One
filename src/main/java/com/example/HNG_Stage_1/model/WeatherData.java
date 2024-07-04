@@ -8,8 +8,10 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class WeatherData {
-    private String name;
+    private String locationName;
     private double temperatureC;
 
-    private String location;
+    public double getTemperatureC() {
+        return temperatureC;
+    }
 }

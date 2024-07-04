@@ -1,11 +1,14 @@
 package com.example.HNG_Stage_1.service;
 
-
 import com.example.HNG_Stage_1.model.Visitor;
 import com.example.HNG_Stage_1.model.WeatherData;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.apache.hc.client5.http.classic.methods.HttpGet;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
@@ -20,41 +23,33 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-
 @Service
-public class UserService{
+public class UserService {
     private static final String API_URL = "http://api.weatherapi.com/v1/current.json";
     private static final String API_KEY = "e79b5861eab94b51a75214742240107";
     private static final String IPINFO_API_URL = "https://ipinfo.io/";
     private static final String IPINFO_TOKEN = "f442c0ec5b63bf";
 
-
-    public ResponseEntity<Visitor> greetings(String visitor_name, HttpServletRequest request)  {
-        String cleanVisitorName = removeSurroundingQuotes(visitor_name);
+    public ResponseEntity<Visitor> greetings(String visitorName, HttpServletRequest request) {
+        String cleanVisitorName = removeSurroundingQuotes(visitorName);
         String clientIp = getClientIpAddress(request);
-//        String clientIp = getPublicIpAddress();
         String city = getCityFromIpinfo(clientIp);
         WeatherData weatherData = getWeatherData(city);
         double temp = weatherData.getTemperatureC();
 
         Visitor visitor = new Visitor();
-        visitor.setClient_ip(clientIp);
+        visitor.setClientIp(clientIp);
         visitor.setLocation(city);
-        visitor.setGreeting("Hello, " + cleanVisitorName + "! , " + "the temperature is " + temp + " degrees Celsius in " + city);
+        visitor.setGreeting("Hello, " + cleanVisitorName + "! The temperature is " + temp + " degrees Celsius in " + city);
 
         return ResponseEntity.ok(visitor);
     }
 
     private String removeSurroundingQuotes(String input) {
-        // Use regex to remove leading and trailing escaped quotes
         Pattern pattern = Pattern.compile("^\"(.*)\"$");
         Matcher matcher = pattern.matcher(input);
         if (matcher.find()) {
@@ -91,7 +86,6 @@ public class UserService{
     private String getCityFromIpinfo(String ipAddress) {
         String apiUrl = IPINFO_API_URL + ipAddress + "/json?token=" + IPINFO_TOKEN;
 
-        // Use Apache HttpClient 5 to send HTTP GET request
         try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
             HttpGet request = new HttpGet(apiUrl);
             try (CloseableHttpResponse response = httpClient.execute(request)) {
@@ -100,7 +94,6 @@ public class UserService{
                     ObjectMapper objectMapper = new ObjectMapper();
                     JsonNode jsonNode = objectMapper.readTree(jsonResponse);
 
-                    // Return the city from the IPinfo response
                     return jsonNode.path("city").asText("Unknown City");
                 }
             }
@@ -123,13 +116,13 @@ public class UserService{
                     .uri(apiUrl)
                     .retrieve()
                     .bodyToMono(String.class)
-                    .block(); // Blocking to convert Mono to actual response (consider using non-blocking in real apps)
+                    .block();
 
             JSONObject jsonResponse = new JSONObject(response);
             String locationName = jsonResponse.getJSONObject("location").getString("name");
             double temperatureC = jsonResponse.getJSONObject("current").getDouble("temp_c");
 
-            return new WeatherData(locationName, temperatureC);
+            return new WeatherData();
 
         } catch (WebClientResponseException e) {
             System.err.println("WebClient Error: " + e.getStatusCode() + " " + e.getResponseBodyAsString());
